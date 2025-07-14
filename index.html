@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Pollo Loco</title>
+    <link rel="icon" type="image/x-icon" href="img/2_character_pepe/Pepe.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="./classes/moveable-object.class.js"></script>
+    <script src="./classes/character.class.js"></script>
+    <script src="./classes/chicken.class.js"></script>
+    <script src="./classes/smallchicken.class.js"></script>
+    <script src="./classes/cloud.class.js"></script>
+    <script src="./classes/background-object.class.js"></script>
+    <script src="./classes/coin.class.js"></script>
+    <script src="./classes/bottle.class.js"></script>
+    <script src="./classes/throwable-bottle.class.js"></script>
+    <script src="./classes/endboss.class.js"></script>
+    <script src="./classes/world.class.js"></script>
+    <script src="./classes/keyboard.class.js"></script>
+    <script src="./classes/level.class.js"></script>
+    <script src="./levels/level1.js"></script>
+    <script src="./Javascript/game.js"></script>
+
+    <link rel="stylesheet" href="./style.css">
+
+</head>
+<body onload="init()">
+    <!-- Landing Page -->
+    <div id="landingPage" class="landing-page">
+        <div class="landing-content">
+            <div class="title-section">
+                <div class="game-logo">
+                    <img src="img/2_character_pepe/Pepe.png" alt="Pepe" class="logo-image">
+                </div>
+                <h1 class="main-title">El Pollo Loco</h1>
+                <p class="subtitle">Ein wildes Abenteuer in der Wüste!</p>
+            </div>
+            
+            <div class="story-section">
+                <h3>Die Geschichte</h3>
+                <p>Pepe, ein mutiger Charakter, befindet sich in der Wüste und muss sich gegen verrückte Hühner zur Wehr setzen. 
+                Kleine und normale Hühner können durch Sprünge besiegt werden, aber der mächtige Endboss erfordert Flaschenwürfe!</p>
+            </div>
+        
+            
+            <div class="controls-preview">
+                <h3>Steuerung</h3>
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <span class="key">← →</span>
+                        <span class="description">Bewegen</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">Leertaste</span>
+                        <span class="description">Springen</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">D / X</span>
+                        <span class="description">Flasche werfen</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button id="startGameBtn" class="game-btn primary-btn">Spiel starten</button>
+                <button id="showGameExplanationBtn" class="game-btn secondary-btn">Spielerklärung</button>
+                <button id="showControlsBtn" class="game-btn secondary-btn">Steuerung</button>
+                <button id="showStoryBtn" class="game-btn secondary-btn">Geschichte</button>
+                <button id="showImpressumBtn" class="game-btn secondary-btn">Impressum</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Explanation Dialog -->
+    <div id="gameExplanationDialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h2>Spielerklärung</h2>
+                <button class="close-btn" onclick="closeDialog('gameExplanationDialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="explanation-section">
+                    <h3>🎮 Spielziel</h3>
+                    <p>Besiege alle Gegner und bezwinge den Endboss, um das Spiel zu gewinnen!</p>
+                    
+                    <h3>👾 Gegner</h3>
+                    <ul>
+                        <li><strong>Kleine Hühner:</strong> Können durch Sprünge von oben getötet werden</li>
+                        <li><strong>Normale Hühner:</strong> Können ebenfalls durch Sprünge besiegt werden</li>
+                        <li><strong>Endboss:</strong> Kann nur durch Flaschenwürfe getötet werden (5 Treffer nötig)</li>
+                    </ul>
+                    
+                    <h3>💰 Sammelobjekte</h3>
+                    <ul>
+                        <li><strong>Münzen:</strong> Sammle sie für Punkte</li>
+                        <li><strong>Flasche:</strong> Sammle sie zum Werfen auf den Endboss</li>
+                    </ul>
+                    
+                    <h3>⚡ Spielmechaniken</h3>
+                    <ul>
+                        <li><strong>Springen:</strong> Drücke Leertaste zum Springen</li>
+                        <li><strong>Flaschen werfen:</strong> Drücke D oder X zum Werfen</li>
+                        <li><strong>Kollisionen:</strong> Berühre Gegner nicht direkt - springe auf sie!</li>
+                        <li><strong>Gesundheit:</strong> Verliere Leben bei Kollisionen mit Gegnern</li>
+                    </ul>
+                    
+                    <h3>🏆 Gewinnen</h3>
+                    <p>Besiege den Endboss mit Flaschenwürfen, um das Spiel zu gewinnen!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Dialog -->
+    <div id="storyDialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h2>Die Geschichte von El Pollo Loco</h2>
+                <button class="close-btn" onclick="closeDialog('storyDialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="story-content">
+                    <h3>🌵 Das Abenteuer beginnt...</h3>
+                    <p>In der weiten Wüste von Mexiko lebt Pepe, ein mutiger Charakter, der eines Tages auf eine seltsame Entdeckung stößt. 
+                    Die Hühner in der Gegend sind verrückt geworden und terrorisieren die Wüste!</p>
+                    
+                    <p>Pepe beschließt, sich der Herausforderung zu stellen und die verrückten Hühner zu besiegen. 
+                    Doch das ist nicht so einfach - besonders der mächtige Endboss, eine riesige Hühnerdame, 
+                    erfordert besondere Taktik und viele Flaschen!</p>
+                    
+                    <h3>🎯 Die Mission</h3>
+                    <p>Deine Aufgabe ist es, Pepe durch die Wüste zu führen, alle kleinen und normalen Hühner zu besiegen 
+                    und schließlich den Endboss mit Flaschenwürfen zu bezwingen.</p>
+                    
+                    <h3>💪 Sei bereit für das Abenteuer!</h3>
+                    <p>Springe über Gegner, sammle Münzen und Flaschen, und werde zum Helden der Wüste!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Dialog -->
+    <div id="controlsDialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h2>Steuerung</h2>
+                <button class="close-btn" onclick="closeDialog('controlsDialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <span class="key">← →</span>
+                        <span class="description">Bewegen</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">Leertaste</span>
+                        <span class="description">Springen</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">D / X</span>
+                        <span class="description">Flasche werfen</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">M</span>
+                        <span class="description">Sound stumm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Impressum Dialog -->
+    <div id="impressumDialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h2>Impressum</h2>
+                <button class="close-btn" onclick="closeDialog('impressumDialog')">×</button>
+            </div>
+            <div class="dialog-body">
+                <h3>Angaben gemäß § 5 TMG</h3>
+                <p><strong>Entwickler:</strong> Martin Schweiger</p>
+                <p><strong>E-Mail:</strong> martin.schweiger@example.com</p>
+                <p><strong>Projekt:</strong> El Pollo Loco - Jump & Run Spiel</p>
+                <p><strong>Entwickelt im Rahmen der Developer Akademie</strong></p>
+                
+                <h3>Haftung für Inhalte</h3>
+                <p>Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.</p>
+                
+                <h3>Urheberrecht</h3>
+                <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="game-container" style="display: none;">
+        <div class="status-bar">
+            <div class="status-item">
+                <img src="img/7_statusbars/3_icons/icon_health.png" alt="Health" class="status-icon">
+                <img src="img/7_statusbars/1_statusbar/2_statusbar_health/green/100.png" alt="Health Bar" id="healthBar" class="status-bar-image">
+                <span id="healthText">100%</span>
+            </div>
+            <div class="status-item">
+                <img src="img/7_statusbars/3_icons/icon_coin.png" alt="Coins" class="status-icon">
+                <img src="img/7_statusbars/1_statusbar/1_statusbar_coin/blue/0.png" alt="Coin Bar" id="coinBar" class="status-bar-image">
+                <span id="coinCounter">0</span>
+            </div>
+            <div class="status-item">
+                <img src="img/7_statusbars/3_icons/icon_salsa_bottle.png" alt="Bottles" class="status-icon">
+                <img src="img/7_statusbars/1_statusbar/3_statusbar_bottle/orange/0.png" alt="Bottle Bar" id="bottleBar" class="status-bar-image">
+                <span id="bottleCounter">0</span>
+            </div>
+            <div class="status-item">
+                <span>Level: <span id="levelCounter">1</span></span>
+            </div>
+            <div class="status-item">
+                <button id="muteBtn" class="mute-btn">Sound</button>
+            </div>
+        </div>
+        
+        <!-- Endboss Status Bar -->
+        <div class="endboss-status" id="endbossStatus">
+            <div class="status-item">
+                <img src="img/7_statusbars/3_icons/icon_health_endboss.png" alt="Endboss Health" class="status-icon">
+                <img src="img/7_statusbars/2_statusbar_endboss/blue.png" alt="Endboss Bar" id="endbossBar" class="status-bar-image">
+                <span id="endbossText">5/5</span>
+            </div>
+        </div>
+        
+        <canvas id="canvas" width="720" height="480"></canvas>
+        
+        <!-- Mobile Touch Controls -->
+        <div class="mobile-controls" id="mobileControls">
+            <div class="mobile-buttons">
+                <button class="mobile-btn left-btn">←</button>
+                <button class="mobile-btn right-btn">→</button>
+                <button class="mobile-btn jump-btn">Jump</button>
+                <button class="mobile-btn throw-btn">Throw</button>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="game-over-screen" style="display: none;">
+            <div class="game-over-content">
+                <h2 id="gameOverTitle">Game Over!</h2>
+                <p id="gameOverMessage">Du hast das Spiel verloren!</p>
+                <div class="final-stats">
+                    <p>Gesammelte Münzen: <span id="finalCoins">0</span></p>
+                    <p>Level erreicht: <span id="finalLevel">1</span></p>
+                </div>
+                <div class="game-over-buttons">
+                    <button id="restartBtn" class="game-btn primary-btn">Neustart</button>
+                    <button id="backToMenuBtn" class="game-btn secondary-btn">Hauptmenü</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Portrait Warning -->
+        <div id="portraitWarning" class="portrait-warning" style="display: none;">
+            <div class="warning-content">
+                <h2>Gerät drehen</h2>
+                <p>Bitte drehe dein Gerät ins Querformat, um zu spielen!</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
