@@ -30,12 +30,12 @@ class World{
      * Resets the game to initial state
      */
     resetGame(){
-        // Reset to Level 1
+        // Zurück zu Level 1
         this.currentLevel = 1;
         this.gameRunning = true;
         this.camera_x = -10;
         
-        // Store original positions from level1
+        // Ursprüngliche Positionen aus level1 speichern
         const originalEnemyPositions = [
             { type: 'Chicken', x: 800 },
             { type: 'Chicken', x: 1200 },
@@ -51,7 +51,7 @@ class World{
             { type: 'Endboss', x: 2800 }
         ];
         
-        // Reload level data by creating fresh instances with exact original positions
+        // Level-Daten neu laden durch Erstellen frischer Instanzen mit exakten ursprünglichen Positionen
         this.enemies = originalEnemyPositions.map((enemy, index) => {
             if (enemy.type === 'Chicken') {
                 const newChicken = new Chicken(enemy.x);
@@ -81,7 +81,7 @@ class World{
         this.setWorld();
         this.checkCollisions();
         
-        // Reset character to safe starting position and all properties
+        // Charakter auf sichere Startposition und alle Eigenschaften zurücksetzen
         this.character.x = 100;
         this.character.y = 170;
         this.character.health = 100;
@@ -95,26 +95,29 @@ class World{
         this.character.isSleeping = false;
         this.character.lastActionTime = Date.now();
         
-        // Initialize status bars immediately
+        // Statusleisten sofort initialisieren
         this.character.initializeStatusBars();
         
-        // Show endboss status bar from the beginning
+        // Endboss-Statusleiste von Anfang an anzeigen
         const endbossStatus = document.getElementById('endbossStatus');
         if (endbossStatus) {
             endbossStatus.style.display = 'flex';
         }
         
-        // Initialize endboss health display
+        // Endboss-Gesundheitsanzeige initialisieren
         setTimeout(() => {
             this.updateEndbossHealth();
         }, 100);
     }
 
     /**
-     * Sets the world reference for the character
+     * Sets the world reference for all game objects
      */
     setWorld(){
         this.character.world = this;
+        this.enemies.forEach(enemy => {
+            enemy.world = this;
+        });
     }
 
     /**
@@ -135,41 +138,31 @@ class World{
         this.addObjectsToMap(this.enemies);
         this.addObjectsToMap(this.clouds);
         
-        // Draw world boundary
+        // Welt-Grenze zeichnen
         this.drawWorldBoundary();
 
         this.ctx.translate(-this.camera_x, 0);
     }
-    
+
     /**
-     * Draws the world boundary wall at the end of the level
+     * Draws a wall at the end of the world
      */
     drawWorldBoundary() {
-        // Draw a wall at the end of the world
-        const wallX = 3500;
-        const wallY = 0;
-        const wallWidth = 100;
-        const wallHeight = 480;
+        // Eine Wand am Ende der Welt zeichnen
+        this.ctx.fillStyle = '#8B4513';
+        this.ctx.fillRect(3500, 0, 100, 480);
         
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.fillRect(wallX, wallY, wallWidth, wallHeight);
-        
-        // Add some visual elements to make it look like a wall
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.fillRect(wallX + 10, wallY + 50, 80, 10);
-        this.ctx.fillRect(wallX + 10, wallY + 150, 80, 10);
-        this.ctx.fillRect(wallX + 10, wallY + 250, 80, 10);
-        this.ctx.fillRect(wallX + 10, wallY + 350, 80, 10);
+        // Einige visuelle Elemente hinzufügen, um es wie eine Wand aussehen zu lassen
+        this.ctx.fillStyle = '#654321';
+        this.ctx.fillRect(3500, 0, 100, 20);
+        this.ctx.fillRect(3500, 460, 100, 20);
     }
 
     /**
-     * Updates game logic and checks for game over conditions
+     * Updates game logic
      */
     update(){
-        // Update game logic here if needed
-        if (this.character.health <= 0) {
-            this.gameOver();
-        }
+        // Spiel-Logik hier aktualisieren, falls nötig
     }
 
     /**
@@ -205,37 +198,37 @@ class World{
         setInterval(() => {
             if (!this.gameRunning) return;
             
-            // Check collisions with enemies
+            // Kollisionen mit Gegnern prüfen
             this.enemies.forEach(enemy => {
                 if (this.character.isColliding(enemy) && !enemy.isDead) {
-                    // Check if character is jumping on enemy
+                    // Prüfen, ob Charakter auf Gegner springt
                     const isFalling = this.character.velocityY > 0;
                     const isAboveEnemy = this.character.y + this.character.height < enemy.y + enemy.height * 0.9;
                     const isOverlappingHorizontally = this.character.x + this.character.width > enemy.x + 10 && 
                                                     this.character.x < enemy.x + enemy.width - 10;
                     
                     if (isFalling && isAboveEnemy && isOverlappingHorizontally) {
-                        // Character is falling on enemy - kill enemy
+                        // Charakter fällt auf Gegner - Gegner töten
                         if ((enemy instanceof Chicken || enemy instanceof SmallChicken) && !enemy.isDead) {
                             enemy.die();
-                            // Bounce character up
+                            // Charakter hochspringen lassen
                             this.character.velocityY = -8;
-                            // Prevent multiple kills on same enemy
+                            // Mehrfache Tötungen auf denselben Gegner verhindern
                             setTimeout(() => {
                                 if (enemy.isDead) {
-                                    // Enemy confirmed dead
+                                    // Gegner bestätigt tot
                                 }
                             }, 100);
                         }
-                        // Endboss cannot be killed by jumping
+                        // Endboss kann nicht durch Springen getötet werden
                     } else if (!enemy.isDead) {
-                        // Normal collision - hurt character
+                        // Normale Kollision - Charakter verletzen
                         this.character.hurt();
                     }
                 }
             });
 
-            // Check collisions with coins
+            // Kollisionen mit Münzen prüfen
             for (let i = this.coins.length - 1; i >= 0; i--) {
                 if (this.character.isColliding(this.coins[i])) {
                     this.character.collectCoin();
@@ -243,7 +236,7 @@ class World{
                 }
             }
 
-            // Check collisions with bottles
+            // Kollisionen mit Flaschen prüfen
             for (let i = this.bottles.length - 1; i >= 0; i--) {
                 if (this.character.isColliding(this.bottles[i])) {
                     this.character.collectBottle();
@@ -251,7 +244,7 @@ class World{
                 }
             }
 
-            // Check throwable bottles hitting enemies
+            // Geworfene Flaschen prüfen, die Gegner treffen
             for (let bottleIndex = this.character.throwableBottles.length - 1; bottleIndex >= 0; bottleIndex--) {
                 const bottle = this.character.throwableBottles[bottleIndex];
                 let bottleHit = false;
@@ -261,111 +254,111 @@ class World{
                     
                     if (bottle.isColliding(enemy) && !enemy.isDead && !bottleHit && !bottle.hasHit) {
                         if (enemy instanceof Endboss) {
-                            // Endboss takes more hits
+                            // Endboss braucht mehr Treffer
                             if (!enemy.hitCount) enemy.hitCount = 0;
                             enemy.hitCount++;
                             
-                            // Update endboss health display
+                            // Endboss-Gesundheitsanzeige aktualisieren
                             this.updateEndbossHealth();
                             
-                            // Endboss dies after 5 hits
+                            // Endboss stirbt nach 5 Treffern
                             if (enemy.hitCount >= 5) {
                                 enemy.die();
                                 
-                                // Hide endboss status bar
+                                // Endboss-Statusleiste ausblenden
                                 const endbossStatus = document.getElementById('endbossStatus');
                                 if (endbossStatus) {
                                     endbossStatus.style.display = 'none';
                                 }
                             }
                         } else if (enemy instanceof Chicken || enemy instanceof SmallChicken) {
-                            // Normal enemy dies immediately
+                            // Normaler Gegner stirbt sofort
                             enemy.die();
                         }
                         
-                        // Trigger bottle splash animation
+                        // Flaschen-Splash-Animation auslösen
                         bottle.hit();
                         bottleHit = true;
-                        break; // Exit enemy loop after hit
+                        break; // Gegner-Schleife nach Treffer verlassen
                     }
                 }
             }
 
-            // Check level completion
+            // Level-Abschluss prüfen
             this.checkLevelCompletion();
-        }, 50); // Even higher frequency for better responsiveness
+        }, 50); // Noch höhere Frequenz für bessere Reaktionsfähigkeit
     }
 
     /**
-     * Checks if the level is completed (endboss defeated)
+     * Checks if the level is completed
      */
-    checkLevelCompletion(){
-        // Check if endboss is defeated
-        const endbossExists = this.enemies.some(enemy => enemy instanceof Endboss && !enemy.isDead);
-        if (!endbossExists) {
-            this.showVictoryScreen();
-        }
-    }
-
-    /**
-     * Updates the endboss health bar display
-     */
-    updateEndbossHealth(){
+    checkLevelCompletion() {
+        // Prüfen, ob Endboss besiegt wurde
         const endboss = this.enemies.find(enemy => enemy instanceof Endboss);
-        if (endboss) {
-            const endbossBar = document.getElementById('endbossBar');
-            const endbossText = document.getElementById('endbossText');
-            
-            if (endbossBar && endbossText) {
-                const maxHits = 5;
-                const currentHits = endboss.hitCount || 0;
-                const remainingHealth = maxHits - currentHits;
-                
-                // Use different images based on remaining health like in the reference
-                let imagePath;
-                if (remainingHealth >= 4) {
-                    imagePath = 'img/7_statusbars/2_statusbar_endboss/blue.png';
-                } else if (remainingHealth >= 2) {
-                    imagePath = 'img/7_statusbars/2_statusbar_endboss/green.png';
-                } else {
-                    imagePath = 'img/7_statusbars/2_statusbar_endboss/orange.png';
-                }
-                
-                // Only update if the image path has changed
-                if (endbossBar.src !== imagePath) {
-                    endbossBar.src = imagePath;
-                }
-                
-                endbossText.textContent = `${remainingHealth}/${maxHits}`;
-            }
+        if (endboss && endboss.isDead) {
+            this.levelCompleted();
         }
     }
 
     /**
-     * Handles game over and shows the game over screen
+     * Handles level completion
      */
-    gameOver(){
-        // Prevent multiple calls
-        if (!this.gameRunning) return;
+    levelCompleted() {
+        // Mehrfache Aufrufe verhindern
+        if (this.levelCompletedCalled) return;
+        this.levelCompletedCalled = true;
         
-        this.gameRunning = false;
-        // Call the global showGameOver function
+        // Globale showGameOver-Funktion aufrufen
+        if (typeof showGameOver === 'function') {
+            showGameOver(true);
+        }
+    }
+
+    /**
+     * Handles game over
+     */
+    gameOver() {
+        // Mehrfache Aufrufe verhindern
+        if (this.gameOverCalled) return;
+        this.gameOverCalled = true;
+        
+        // Globale showGameOver-Funktion mit won=true aufrufen
         if (typeof showGameOver === 'function') {
             showGameOver(false);
         }
     }
 
     /**
-     * Shows the victory screen when the game is won
+     * Updates the endboss health display
      */
-    showVictoryScreen(){
-        // Prevent multiple calls
-        if (!this.gameRunning) return;
+    updateEndbossHealth() {
+        const endboss = this.enemies.find(enemy => enemy instanceof Endboss);
+        const endbossHealthBar = document.getElementById('endbossHealthBar');
         
-        this.gameRunning = false;
-        // Call the global showGameOver function with won=true
-        if (typeof showGameOver === 'function') {
-            showGameOver(true);
+        if (endboss && endbossHealthBar) {
+            const remainingHealth = Math.max(0, 5 - endboss.hitCount);
+            const healthPercentage = (remainingHealth / 5) * 100;
+            
+            // Unterschiedliche Bilder je nach verbleibender Gesundheit wie in der Referenz
+            let imagePath;
+            if (healthPercentage >= 100) {
+                imagePath = 'img/7_statusbars/2_statusbar_endboss/green.png';
+            } else if (healthPercentage >= 80) {
+                imagePath = 'img/7_statusbars/2_statusbar_endboss/green.png';
+            } else if (healthPercentage >= 60) {
+                imagePath = 'img/7_statusbars/2_statusbar_endboss/orange.png';
+            } else if (healthPercentage >= 40) {
+                imagePath = 'img/7_statusbars/2_statusbar_endboss/orange.png';
+            } else if (healthPercentage >= 20) {
+                imagePath = 'img/7_statusbars/2_statusbar_endboss/orange.png';
+            } else {
+                imagePath = 'img/7_statusbars/2_statusbar_endboss/blue.png';
+            }
+            
+            // Nur aktualisieren, wenn sich der Bildpfad geändert hat
+            if (endbossHealthBar.src !== imagePath) {
+                endbossHealthBar.src = imagePath;
+            }
         }
     }
 }

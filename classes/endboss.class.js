@@ -1,27 +1,28 @@
 /**
- * Represents the endboss enemy in the game
+ * Stellt den Endboss-Feind im Spiel dar
  * @extends MoveableObject
  */
 class Endboss extends MoveableObject {
+
     height = 200;
     width = 150;
-    y = 200;
-    speed = 2.0; // Increased speed
+    y = 250;
+    speed = 2.0; // Erhöhte Geschwindigkeit
+    isDead = false;
     isAlerted = false;
     isAttacking = false;
     hitCount = 0;
     lastAttackTime = 0;
-    attackCooldown = 1500; // 1.5 seconds between attacks
-    attackRange = 250; // Increased attack range
-    alertRange = 600;
-    
+    attackCooldown = 1500; // 1,5 Sekunden zwischen Angriffen
+    attackRange = 250; // Erhöhter Angriffsbereich
+    alertRange = 300; // Bereich für Alarmierung
+
     IMAGES_WALKING = [
         'img/4_enemie_boss_chicken/1_walk/G1.png',
         'img/4_enemie_boss_chicken/1_walk/G2.png',
         'img/4_enemie_boss_chicken/1_walk/G3.png',
         'img/4_enemie_boss_chicken/1_walk/G4.png',
     ];
-    
     IMAGES_ALERT = [
         'img/4_enemie_boss_chicken/2_alert/G5.png',
         'img/4_enemie_boss_chicken/2_alert/G6.png',
@@ -32,7 +33,6 @@ class Endboss extends MoveableObject {
         'img/4_enemie_boss_chicken/2_alert/G11.png',
         'img/4_enemie_boss_chicken/2_alert/G12.png',
     ];
-    
     IMAGES_ATTACK = [
         'img/4_enemie_boss_chicken/3_attack/G13.png',
         'img/4_enemie_boss_chicken/3_attack/G14.png',
@@ -43,160 +43,135 @@ class Endboss extends MoveableObject {
         'img/4_enemie_boss_chicken/3_attack/G19.png',
         'img/4_enemie_boss_chicken/3_attack/G20.png',
     ];
+    IMAGES_HURT = [
+        'img/4_enemie_boss_chicken/4_hurt/G21.png',
+        'img/4_enemie_boss_chicken/4_hurt/G22.png',
+        'img/4_enemie_boss_chicken/4_hurt/G23.png',
+    ];
+    IMAGES_DEAD = [
+        'img/4_enemie_boss_chicken/5_dead/G24.png',
+        'img/4_enemie_boss_chicken/5_dead/G25.png',
+        'img/4_enemie_boss_chicken/5_dead/G26.png',
+    ];
 
-    /**
-     * Initializes the endboss with specified position
-     * @param {number} x - X position for the endboss
-     */
     constructor(x) {
         super();
         this.loadImage('img/4_enemie_boss_chicken/1_walk/G1.png');
         this.loadImages(this.IMAGES_WALKING);
         this.loadImages(this.IMAGES_ALERT);
         this.loadImages(this.IMAGES_ATTACK);
+        this.loadImages(this.IMAGES_HURT);
+        this.loadImages(this.IMAGES_DEAD);
         this.x = x;
-        this.isDead = false;
-
         this.animate();
     }
 
-    /**
-     * Sets up all animation and behavior loops for the endboss
-     */
     animate() {
-        // Check if player is close enough to alert
+        // Bewegung und Angriffslogik
         setInterval(() => {
-            if (this.world && this.world.character && !this.isDead) {
+            if (!this.isDead && this.world && this.world.character) {
                 const distance = Math.abs(this.x - this.world.character.x);
+                
+                // Prüfen, ob Spieler nah genug ist für Alarmierung
                 if (distance < this.alertRange && !this.isAlerted) {
-                    this.alert();
+                    this.isAlerted = true;
+                    this.currentImage = 0;
                 }
-            }
-        }, 200);
-
-        // Movement and attack logic
-        setInterval(() => {
-            if (this.isAlerted && !this.isDead) {
-                this.moveTowardsPlayer();
-                this.checkForAttack();
+                
+                if (this.isAlerted && !this.isAttacking) {
+                    // Bewegung und Angriffslogik
+                    if (distance < this.attackRange) {
+                        // Angriff starten
+                        this.startAttack();
+                    } else {
+                        // Zum Spieler bewegen
+                        this.moveTowardsPlayer();
+                    }
+                }
             }
         }, 1000 / 60);
 
-        // Walking animation
+        // Animation
         setInterval(() => {
-            if (!this.isAlerted && !this.isAttacking && !this.isDead) {
+            if (this.isDead) {
+                // Tote-Animation anzeigen
+                let i = this.currentImage % this.IMAGES_DEAD.length;
+                let path = this.IMAGES_DEAD[i];
+                this.img = this.imageCache[path];
+                this.currentImage++;
+            } else if (this.isAttacking) {
+                // Angriffs-Animation
+                let i = this.currentImage % this.IMAGES_ATTACK.length;
+                let path = this.IMAGES_ATTACK[i];
+                this.img = this.imageCache[path];
+                this.currentImage++;
+                
+                // Angriff beenden, wenn Animation abgeschlossen ist
+                if (this.currentImage >= this.IMAGES_ATTACK.length) {
+                    this.isAttacking = false;
+                    this.currentImage = 0;
+                }
+            } else if (this.isAlerted) {
+                // Alarmierungs-Animation
+                let i = this.currentImage % this.IMAGES_ALERT.length;
+                let path = this.IMAGES_ALERT[i];
+                this.img = this.imageCache[path];
+                this.currentImage++;
+            } else {
+                // Geh-Animation
                 let i = this.currentImage % this.IMAGES_WALKING.length;
                 let path = this.IMAGES_WALKING[i];
                 this.img = this.imageCache[path];
                 this.currentImage++;
             }
-        }, 200);
-
-        // Alert animation
-        setInterval(() => {
-            if (this.isAlerted && !this.isAttacking && !this.isDead) {
-                let i = this.currentImage % this.IMAGES_ALERT.length;
-                let path = this.IMAGES_ALERT[i];
-                this.img = this.imageCache[path];
-                this.currentImage++;
-            }
         }, 150);
-
-        // Attack animation
-        setInterval(() => {
-            if (this.isAttacking && !this.isDead) {
-                let i = this.currentImage % this.IMAGES_ATTACK.length;
-                let path = this.IMAGES_ATTACK[i];
-                this.img = this.imageCache[path];
-                this.currentImage++;
-            }
-        }, 100);
     }
 
-    /**
-     * Moves the endboss towards the player when alerted
-     */
     moveTowardsPlayer() {
-        if (this.world && this.world.character) {
-            const playerX = this.world.character.x;
-            const distance = Math.abs(this.x - playerX);
-            const oldX = this.x;
-            
-            // Move towards player if not too close
-            if (distance > 50) {
-                if (this.x < playerX - 20) {
-                    this.x += this.speed;
-                    this.otherDirection = true; // Face left when moving right (corrected)
-                } else if (this.x > playerX + 20) {
-                    this.x -= this.speed;
-                    this.otherDirection = false; // Face right when moving left (corrected)
-                }
+        if (!this.world || !this.world.character) return;
+        
+        // Zum Spieler bewegen, wenn nicht zu nah
+        const distance = this.x - this.world.character.x;
+        if (Math.abs(distance) > 50) {
+            if (distance > 0) {
+                this.x -= this.speed;
+                this.otherDirection = true; // Nach links schauen beim Rechtsbewegung (korrigiert)
+            } else {
+                this.x += this.speed;
+                this.otherDirection = false; // Nach rechts schauen beim Linksbewegung (korrigiert)
             }
         }
     }
 
-    /**
-     * Checks if the endboss should attack the player
-     */
-    checkForAttack() {
-        if (this.world && this.world.character) {
-            const distance = Math.abs(this.x - this.world.character.x);
-            const currentTime = Date.now();
-            const timeSinceLastAttack = currentTime - this.lastAttackTime;
+    startAttack() {
+        const currentTime = Date.now();
+        // Angreifen, wenn nah genug und Cooldown vorbei ist
+        if (currentTime - this.lastAttackTime > this.attackCooldown) {
+            this.isAttacking = true;
+            this.currentImage = 0;
+            this.lastAttackTime = currentTime;
             
-            // Attack if close enough and cooldown is over
-            if (distance < this.attackRange && timeSinceLastAttack > this.attackCooldown && !this.isAttacking) {
-                this.attack();
-            }
+            // Angriff auf Charakter, wenn nah genug - nur während Angriffsanimation
+            setTimeout(() => {
+                if (this.world && this.world.character && this.isAttacking) {
+                    const distance = Math.abs(this.x - this.world.character.x);
+                    if (distance < 100) { // Viel kleinerer Angriffsbereich für tatsächlichen Schaden
+                        this.world.character.hurt();
+                    }
+                }
+            }, 1000); // Angriff passiert 1 Sekunde in die Angriffsanimation
         }
     }
 
-    /**
-     * Alerts the endboss to start pursuing the player
-     */
-    alert() {
-        this.isAlerted = true;
-        this.currentImage = 0;
-
-    }
-
-    /**
-     * Initiates an attack sequence against the player
-     */
-    attack() {
-        this.isAttacking = true;
-        this.currentImage = 0;
-        this.lastAttackTime = Date.now();
-        
-        // Attack the character if close enough - only during attack animation
-        setTimeout(() => {
-            if (this.world && this.world.character && this.isAttacking) {
-                const distance = Math.abs(this.x - this.world.character.x);
-                if (distance < 100) { // Much smaller attack range for actual damage
-                    this.world.character.hurt();
-                }
-            }
-        }, 1000); // Attack happens 1 second into the attack animation
-        
-        setTimeout(() => {
-            this.isAttacking = false;
-        }, 2000);
-    }
-
-    /**
-     * Handles endboss death and stops all behaviors
-     */
     die() {
         this.isDead = true;
-        this.isAlerted = false;
-        this.isAttacking = false;
-
+        this.currentImage = 0;
     }
 
     /**
-     * Checks if the endboss is colliding with another object
-     * @param {MoveableObject} mo - The object to check collision with
-     * @returns {boolean} True if collision detected, false otherwise
+     * Prüft, ob der Endboss mit einem anderen Objekt kollidiert
+     * @param {MoveableObject} mo - Das Objekt, mit dem die Kollision überprüft werden soll
+     * @returns {boolean} True, wenn eine Kollision erkannt wurde, false sonst
      */
     isColliding(mo) {
         if (!mo) return false;

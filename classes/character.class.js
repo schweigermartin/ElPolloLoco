@@ -19,8 +19,8 @@ class Character extends MoveableObject{
     throwableBottles = [];
     canThrowBottle = true;
     lastThrowTime = 0;
-    throwCooldown = 500; // 500ms cooldown between throws
-    lastActionTime = Date.now(); // Track when last action occurred
+    throwCooldown = 500; // 500ms Cooldown zwischen Würfen
+    lastActionTime = Date.now(); // Verfolgen, wann die letzte Aktion stattfand
     isSleeping = false;
     IMAGES_WALKING = [
         'img/2_character_pepe/2_walk/W-21.png',
@@ -70,35 +70,52 @@ class Character extends MoveableObject{
         'img/2_character_pepe/4_hurt/H-42.png',
         'img/2_character_pepe/4_hurt/H-43.png',
     ];
+    IMAGES_DEAD = [
+        'img/2_character_pepe/5_dead/D-51.png',
+        'img/2_character_pepe/5_dead/D-52.png',
+        'img/2_character_pepe/5_dead/D-53.png',
+        'img/2_character_pepe/5_dead/D-54.png',
+        'img/2_character_pepe/5_dead/D-55.png',
+        'img/2_character_pepe/5_dead/D-56.png',
+        'img/2_character_pepe/5_dead/D-57.png',
+    ];
     world;
 
     /**
-     * Initializes the character with default properties and animations
+     * Initialisiert den Charakter mit Standardeigenschaften und Animationen
      */
     constructor(){
         super();
-        this.loadImage('img/2_character_pepe/1_idle/idle/I-1.png');
+        this.loadImage('img/2_character_pepe/2_walk/W-21.png');
         this.loadImages(this.IMAGES_WALKING);
         this.loadImages(this.IMAGES_JUMPING);
         this.loadImages(this.IMAGES_IDLE);
         this.loadImages(this.IMAGES_SLEEP);
         this.loadImages(this.IMAGES_HURT);
-
+        this.loadImages(this.IMAGES_DEAD);
         this.animate();
         
-        // Initialize all status bars
+        // Alle Statusleisten initialisieren
         setTimeout(() => {
-            this.updateHealthBar();
-            this.updateCoinCounter();
-            this.updateBottleCounter();
+            this.initializeStatusBars();
         }, 100);
+    }
+
+    /**
+     * Initialisiert alle Statusleisten
+     */
+    initializeStatusBars() {
+        // Alle Statusleisten initialisieren
+        this.updateHealthBar();
+        this.updateCoinCounter();
+        this.updateBottleCounter();
     }
 
     /**
      * Sets up all animation loops for the character (movement, walking, jumping, hurt)
      */
     animate(){
-        // Movement and jumping
+        // Bewegung und Springen
         setInterval(() => {
             if (this.world && this.world.keyboard) {
                 if (this.world.keyboard.RIGHT) {
@@ -136,10 +153,10 @@ class Character extends MoveableObject{
                 this.world.camera_x = -this.x + 100;
             }
             
-            // World boundary - prevent infinite running
+            // Welt-Grenze - verhindert endloses Laufen
             if (this.x > 3500) {
                 this.x = 3500;
-                // Show message that this is the end of the world
+                // Nachricht anzeigen, dass dies das Ende der Welt ist
                 if (!this.worldBoundaryMessageShown) {
                     this.showWorldBoundaryMessage();
                     this.worldBoundaryMessageShown = true;
@@ -149,61 +166,55 @@ class Character extends MoveableObject{
             }
         }, 1000 / 60);
 
-        // Walking animation
+        // Geh-Animation
         setInterval(() => {
-            if (this.world && this.world.keyboard) {
-                if ((this.world.keyboard.RIGHT || this.world.keyboard.LEFT) && !this.isJumping && !this.isHurt) {
-                    let i = this.currentImage % this.IMAGES_WALKING.length;
-                    let path = this.IMAGES_WALKING[i];
-                    this.img = this.imageCache[path];
-                    this.currentImage++; 
-                    this.lastActionTime = Date.now();
-                    this.isSleeping = false;
-                }
+            if (this.isOnGround && !this.isHurt && !this.isSleeping) {
+                let i = this.currentImage % this.IMAGES_WALKING.length;
+                let path = this.IMAGES_WALKING[i];
+                this.img = this.imageCache[path];
+                this.currentImage++;
             }
         }, 100);
 
-        // Jumping animation
+        // Sprung-Animation
         setInterval(() => {
-            if (this.isJumping && !this.isHurt) {
+            if (!this.isOnGround && !this.isHurt) {
                 let i = this.currentImage % this.IMAGES_JUMPING.length;
                 let path = this.IMAGES_JUMPING[i];
                 this.img = this.imageCache[path];
                 this.currentImage++;
             }
-        }, 150);
+        }, 100);
 
-        // Idle and Sleep animation
+        // Idle- und Sleep-Animation
         setInterval(() => {
-            if (!this.isJumping && !this.isHurt && this.world && this.world.keyboard) {
-                const currentTime = Date.now();
-                const timeSinceLastAction = currentTime - this.lastActionTime;
-                
-                // Check if character should be sleeping (after 15 seconds)
-                if (timeSinceLastAction > 15000) {
-                    this.isSleeping = true;
-                }
-                
-                // If no movement keys are pressed, show idle or sleep animation
-                if (!this.world.keyboard.RIGHT && !this.world.keyboard.LEFT && !this.world.keyboard.SPACE && !this.world.keyboard.D) {
-                    if (this.isSleeping) {
-                        // Sleep animation
-                        let i = this.currentImage % this.IMAGES_SLEEP.length;
-                        let path = this.IMAGES_SLEEP[i];
-                        this.img = this.imageCache[path];
-                        this.currentImage++;
-                    } else {
-                        // Idle animation
-                        let i = this.currentImage % this.IMAGES_IDLE.length;
-                        let path = this.IMAGES_IDLE[i];
-                        this.img = this.imageCache[path];
-                        this.currentImage++;
-                    }
+            // Prüfen, ob Charakter schlafen sollte (nach 15 Sekunden)
+            const timeSinceLastAction = Date.now() - this.lastActionTime;
+            if (timeSinceLastAction > 15000) {
+                this.isSleeping = true;
+            } else {
+                this.isSleeping = false;
+            }
+
+            // Wenn keine Bewegungstasten gedrückt sind, Idle- oder Sleep-Animation anzeigen
+            if (this.isOnGround && !this.isHurt && !this.world?.keyboard?.RIGHT && !this.world?.keyboard?.LEFT) {
+                if (this.isSleeping) {
+                    // Sleep-Animation
+                    let i = this.currentImage % this.IMAGES_SLEEP.length;
+                    let path = this.IMAGES_SLEEP[i];
+                    this.img = this.imageCache[path];
+                    this.currentImage++;
+                } else {
+                    // Idle-Animation
+                    let i = this.currentImage % this.IMAGES_IDLE.length;
+                    let path = this.IMAGES_IDLE[i];
+                    this.img = this.imageCache[path];
+                    this.currentImage++;
                 }
             }
         }, 200);
 
-        // Hurt animation
+        // Verletzungs-Animation
         setInterval(() => {
             if (this.isHurt) {
                 let i = this.currentImage % this.IMAGES_HURT.length;
@@ -211,18 +222,17 @@ class Character extends MoveableObject{
                 this.img = this.imageCache[path];
                 this.currentImage++;
             }
-        }, 150);
+        }, 100);
     }
 
     /**
-     * Makes the character jump if on ground and not hurt
+     * Handles character jumping with realistic physics
      */
-    jump(){
+    jump() {
         if (this.isOnGround && !this.isHurt) {
             this.velocityY = -12;
             this.isOnGround = false;
             this.isJumping = true;
-            this.currentImage = 0;
             this.lastActionTime = Date.now();
             this.isSleeping = false;
         }
@@ -237,10 +247,10 @@ class Character extends MoveableObject{
             this.isHurt = true;
             this.currentImage = 0;
             
-            // Update health bar
+            // Gesundheitsleiste aktualisieren
             this.updateHealthBar();
             
-            // Reset hurt state after animation
+            // Verletzungszustand nach Animation zurücksetzen
             setTimeout(() => {
                 this.isHurt = false;
             }, 1000);
@@ -263,7 +273,7 @@ class Character extends MoveableObject{
      * Collects a bottle and updates the bottle counter
      */
     collectBottle(){
-        // Maximum of 10 bottles
+        // Maximal 10 Flaschen
         if (this.bottles < 10) {
             this.bottles++;
             this.updateBottleCounter();
@@ -271,37 +281,35 @@ class Character extends MoveableObject{
     }
 
     /**
-     * Updates the health bar display with current health percentage
+     * Updates the health bar display
      */
     updateHealthBar(){
+        const healthCounter = document.getElementById('healthCounter');
         const healthBar = document.getElementById('healthBar');
-        const healthText = document.getElementById('healthText');
+        if (healthCounter) {
+            healthCounter.textContent = this.health;
+        }
         if (healthBar) {
-            const healthPercentage = Math.max(0, this.health);
-            
-            // Use different images based on health percentage like in the reference
+            // Unterschiedliche Bilder je nach Gesundheitsprozentsatz wie in der Referenz
             let imagePath;
-            if (healthPercentage >= 100) {
+            if (this.health >= 100) {
                 imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/green/100.png';
-            } else if (healthPercentage >= 80) {
+            } else if (this.health >= 80) {
                 imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/green/80.png';
-            } else if (healthPercentage >= 60) {
+            } else if (this.health >= 60) {
                 imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/green/60.png';
-            } else if (healthPercentage >= 40) {
-                imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/green/40.png';
-            } else if (healthPercentage >= 20) {
-                imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/green/20.png';
+            } else if (this.health >= 40) {
+                imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/orange/40.png';
+            } else if (this.health >= 20) {
+                imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/orange/20.png';
             } else {
-                imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/green/0.png';
+                imagePath = 'img/7_statusbars/1_statusbar/2_statusbar_health/orange/0.png';
             }
             
-            // Only update if the image path has changed
+            // Nur aktualisieren, wenn sich der Bildpfad geändert hat
             if (healthBar.src !== imagePath) {
                 healthBar.src = imagePath;
             }
-        }
-        if (healthText) {
-            healthText.textContent = Math.max(0, this.health) + '%';
         }
     }
 
@@ -315,11 +323,11 @@ class Character extends MoveableObject{
             coinCounter.textContent = this.coins;
         }
         if (coinBar) {
-            // Calculate coin percentage based on total coins in level
-            const totalCoinsInLevel = 20; // Total coins available in level
+            // Münzenprozentsatz basierend auf Gesamtmünzen im Level berechnen
+            const totalCoinsInLevel = 20; // Gesamtmünzen verfügbar im Level
             const coinPercentage = Math.min(100, (this.coins / totalCoinsInLevel) * 100);
             
-            // Use different images based on coin percentage
+            // Unterschiedliche Bilder je nach Münzenprozentsatz
             let imagePath;
             if (coinPercentage >= 100) {
                 imagePath = 'img/7_statusbars/1_statusbar/1_statusbar_coin/blue/100.png';
@@ -335,7 +343,7 @@ class Character extends MoveableObject{
                 imagePath = 'img/7_statusbars/1_statusbar/1_statusbar_coin/blue/0.png';
             }
             
-            // Only update if the image path has changed
+            // Nur aktualisieren, wenn sich der Bildpfad geändert hat
             if (coinBar.src !== imagePath) {
                 coinBar.src = imagePath;
             }
@@ -352,11 +360,11 @@ class Character extends MoveableObject{
             bottleCounter.textContent = this.bottles;
         }
         if (bottleBar) {
-            // Calculate bottle percentage based on maximum of 10 bottles
+            // Flaschenprozentsatz basierend auf maximal 10 Flaschen berechnen
             const maxBottles = 10;
             const bottlePercentage = Math.min(100, (this.bottles / maxBottles) * 100);
             
-            // Use different images based on bottle percentage
+            // Unterschiedliche Bilder je nach Flaschenprozentsatz
             let imagePath;
             if (bottlePercentage >= 100) {
                 imagePath = 'img/7_statusbars/1_statusbar/3_statusbar_bottle/orange/100.png';
@@ -372,7 +380,7 @@ class Character extends MoveableObject{
                 imagePath = 'img/7_statusbars/1_statusbar/3_statusbar_bottle/orange/0.png';
             }
             
-            // Only update if the image path has changed
+            // Nur aktualisieren, wenn sich der Bildpfad geändert hat
             if (bottleBar.src !== imagePath) {
                 bottleBar.src = imagePath;
             }
@@ -380,10 +388,10 @@ class Character extends MoveableObject{
     }
 
     /**
-     * Initializes all status bars with correct default values
+     * Initialisiert Statusleisten einmal mit korrekten Werten
      */
     initializeStatusBars() {
-        // Initialize status bars once with correct values
+        // Statusleisten einmal mit korrekten Werten initialisieren
         this.updateHealthBar();
         this.updateCoinCounter();
         this.updateBottleCounter();
@@ -409,7 +417,7 @@ class Character extends MoveableObject{
             bottle.otherDirection = this.otherDirection;
             this.throwableBottles.push(bottle);
             
-            // Remove bottle after 3 seconds
+            // Flasche nach 3 Sekunden entfernen
             setTimeout(() => {
                 const index = this.throwableBottles.indexOf(bottle);
                 if (index > -1) {
@@ -420,42 +428,40 @@ class Character extends MoveableObject{
     }
 
     /**
-     * Handles character death and triggers game over
-     */
-    die(){
-        if (this.world) {
-            this.world.gameOver();
-        }
-    }
-
-    /**
-     * Shows a temporary message when the character reaches the world boundary
+     * Shows a temporary message at the world boundary
      */
     showWorldBoundaryMessage() {
-        // Create a temporary message element
+        // Temporäres Nachrichtenelement erstellen
         const message = document.createElement('div');
         message.style.cssText = `
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 20px;
             border-radius: 10px;
-            font-size: 1.2em;
+            font-size: 18px;
             z-index: 1000;
-            text-align: center;
         `;
-        message.textContent = 'Du hast das Ende der Welt erreicht!';
+        message.textContent = 'Das ist das Ende der Welt!';
         document.body.appendChild(message);
         
-        // Remove message after 3 seconds
+        // Nachricht nach 3 Sekunden entfernen
         setTimeout(() => {
-            if (document.body.contains(message)) {
-                document.body.removeChild(message);
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
             }
         }, 3000);
+    }
+
+    /**
+     * Handles character death
+     */
+    die() {
+        // Character death logic would go here
+        console.log('Character died');
     }
 
     /**

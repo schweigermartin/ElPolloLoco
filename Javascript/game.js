@@ -29,18 +29,41 @@ function init() {
  */
 function setupEventListeners() {
     // Landing page buttons
-    document.getElementById('startGameBtn').addEventListener('click', startGame);
-    document.getElementById('showGameExplanationBtn').addEventListener('click', () => showDialog('gameExplanationDialog'));
-    document.getElementById('showControlsBtn').addEventListener('click', () => showDialog('controlsDialog'));
-    document.getElementById('showStoryBtn').addEventListener('click', () => showDialog('storyDialog'));
-    document.getElementById('showImpressumBtn').addEventListener('click', () => showDialog('impressumDialog'));
+    const startButton = document.getElementById('startButton');
+    const optionsButton = document.getElementById('optionsButton');
+    const controlsButton = document.getElementById('controlsButton');
+    const explanationButton = document.getElementById('explanationButton');
+    const imprintButton = document.getElementById('imprintButton');
     
     // Game over buttons
-    document.getElementById('restartBtn').addEventListener('click', restartGame);
-    document.getElementById('backToMenuBtn').addEventListener('click', backToMenu);
+    const restartButton = document.getElementById('restartButton');
+    const backToMenuButton = document.getElementById('backToMenuButton');
     
     // Mute button
-    document.getElementById('muteBtn').addEventListener('click', toggleMute);
+    const muteButton = document.getElementById('muteButton');
+    
+    // Mobile controls
+    const leftBtn = document.querySelector('.left-btn');
+    const rightBtn = document.querySelector('.right-btn');
+    const jumpBtn = document.querySelector('.jump-btn');
+    const throwBtn = document.querySelector('.throw-btn');
+    
+    // Orientation change
+    const orientationMessage = document.getElementById('orientationMessage');
+    
+    // Landing page buttons
+    startButton.addEventListener('click', startGame);
+    explanationButton.addEventListener('click', () => showDialog('gameExplanationDialog'));
+    controlsButton.addEventListener('click', () => showDialog('controlsDialog'));
+    // showStoryBtn.addEventListener('click', () => showDialog('storyDialog')); // This line was removed from the original file
+    // showImpressumBtn.addEventListener('click', () => showDialog('impressumDialog')); // This line was removed from the original file
+    
+    // Game over buttons
+    restartButton.addEventListener('click', restartGame);
+    backToMenuButton.addEventListener('click', backToMenu);
+    
+    // Mute button
+    muteButton.addEventListener('click', toggleMute);
     
     // Mobile controls
     setupMobileControls();
@@ -101,8 +124,7 @@ function closeDialog(dialogId) {
 }
 
 /**
- * Shows the game over screen with appropriate message based on win/loss
- * @param {boolean} won - Whether the player won the game
+ * Shows the game over screen with victory or defeat message
  */
 function showGameOver(won = false) {
     // Prevent multiple calls
@@ -120,7 +142,7 @@ function showGameOver(won = false) {
 }
 
 /**
- * Shows the game over image for a few seconds before showing the game over screen
+ * Shows the game over image for 3 seconds before showing the game over screen
  */
 function showGameOverImage() {
     // Check if overlay already exists
@@ -129,9 +151,9 @@ function showGameOverImage() {
     }
     
     // Create overlay for the game over image
-    const gameOverOverlay = document.createElement('div');
-    gameOverOverlay.id = 'gameOverImageOverlay';
-    gameOverOverlay.style.cssText = `
+    const overlay = document.createElement('div');
+    overlay.id = 'gameOverImageOverlay';
+    overlay.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
@@ -141,28 +163,25 @@ function showGameOverImage() {
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 2500;
-        backdrop-filter: blur(5px);
+        z-index: 1000;
     `;
     
     // Create image element
     const gameOverImage = document.createElement('img');
-    gameOverImage.src = 'img/9_intro_outro_screens/game_over/oh no you lost!.png';
+    gameOverImage.src = 'img/9_intro_outro_screens/game_over/game over!.png';
     gameOverImage.style.cssText = `
-        max-width: 90%;
-        max-height: 90%;
+        max-width: 80%;
+        max-height: 80%;
         object-fit: contain;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     `;
     
-    gameOverOverlay.appendChild(gameOverImage);
-    document.body.appendChild(gameOverOverlay);
+    overlay.appendChild(gameOverImage);
+    document.body.appendChild(overlay);
     
     // Remove image after 3 seconds and show game over screen
     setTimeout(() => {
-        if (document.body.contains(gameOverOverlay)) {
-            document.body.removeChild(gameOverOverlay);
+        if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
         }
         showGameOverScreen(false);
     }, 3000);
@@ -220,12 +239,14 @@ function backToMenu() {
 }
 
 /**
- * Toggles the mute state and updates the button text accordingly
+ * Toggles the mute state and saves it to localStorage
  */
 function toggleMute() {
     isMuted = !isMuted;
-    const muteBtn = document.getElementById('muteBtn');
-    muteBtn.textContent = isMuted ? 'Mute' : 'Sound';
+    const muteButton = document.getElementById('muteButton');
+    if (muteButton) {
+        muteButton.textContent = isMuted ? '🔊' : '🔇';
+    }
     
     // Save mute state to localStorage
     localStorage.setItem('elPolloLocoMuted', isMuted);
@@ -304,88 +325,110 @@ function setupMobileControls() {
 }
 
 /**
- * Handles orientation changes and shows/hides appropriate content based on device orientation
+ * Handles orientation changes for mobile devices
  */
 function handleOrientationChange() {
-    const gameContainer = document.getElementById('gameContainer');
-    const portraitWarning = document.getElementById('portraitWarning');
+    const orientationMessage = document.getElementById('orientationMessage');
+    const mobileControls = document.querySelector('.mobile-controls');
     
-    if (window.innerWidth <= 768 && window.innerHeight > window.innerWidth) {
+    if (window.innerHeight > window.innerWidth) {
         // Portrait mode on mobile
-        gameContainer.style.display = 'none';
-        portraitWarning.style.display = 'flex';
+        if (orientationMessage) orientationMessage.style.display = 'flex';
+        if (mobileControls) mobileControls.style.display = 'none';
     } else {
         // Landscape mode or desktop
-        portraitWarning.style.display = 'none';
-        if (isGameRunning) {
-            gameContainer.style.display = 'block';
+        if (orientationMessage) orientationMessage.style.display = 'none';
+        if (mobileControls) mobileControls.style.display = 'flex';
+    }
+}
+
+/**
+ * Loads the saved mute state from localStorage
+ */
+function loadMuteState() {
+    // Load mute state on page load
+    const savedMuteState = localStorage.getItem('elPolloLocoMuted');
+    if (savedMuteState !== null) {
+        isMuted = savedMuteState === 'true';
+        const muteButton = document.getElementById('muteButton');
+        if (muteButton) {
+            muteButton.textContent = isMuted ? '🔊' : '🔇';
         }
     }
 }
 
-// Load mute state on page load
-window.addEventListener('load', () => {
-    const savedMuteState = localStorage.getItem('elPolloLocoMuted');
-    if (savedMuteState !== null) {
-        isMuted = savedMuteState === 'true';
-        const muteBtn = document.getElementById('muteBtn');
-        muteBtn.textContent = isMuted ? 'Mute' : 'Sound';
-    }
-});
+/**
+ * Sets up click outside functionality for dialogs
+ */
+function setupClickOutside() {
+    // Close dialogs when clicking outside
+    document.addEventListener('click', (e) => {
+        const dialogs = document.querySelectorAll('.dialog');
+        dialogs.forEach(dialog => {
+            if (!dialog.contains(e.target) && !e.target.closest('[data-dialog]')) {
+                dialog.style.display = 'none';
+            }
+        });
+    });
+}
 
-// Close dialogs when clicking outside
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('dialog-overlay')) {
-        e.target.style.display = 'none';
-    }
-});
+/**
+ * Prevents context menu on mobile control buttons
+ */
+function preventContextMenu() {
+    // Prevent context menu on mobile buttons
+    const mobileButtons = document.querySelectorAll('.mobile-controls button');
+    mobileButtons.forEach(button => {
+        button.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    });
+}
 
-// Prevent context menu on mobile buttons
-document.addEventListener('contextmenu', (e) => {
-    if (e.target.classList.contains('mobile-btn')) {
-        e.preventDefault();
-    }
-});
+/**
+ * Sets up keyboard event listeners
+ */
+function setupKeyboardEvents() {
+    // Keyboard event listeners
+    document.addEventListener('keydown', (e) => {
+        if (world && world.keyboard) {
+            switch(e.code) {
+                case 'ArrowLeft':
+                case 'KeyA':
+                    world.keyboard.LEFT = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    world.keyboard.RIGHT = true;
+                    break;
+                case 'Space':
+                    world.keyboard.SPACE = true;
+                    break;
+                case 'KeyD':
+                    world.keyboard.D = true;
+                    break;
+            }
+        }
+    });
 
-// Keyboard event listeners
-window.addEventListener('keydown', (event) => {
-    if (event.key == 'ArrowRight') {
-        if (world && world.keyboard) world.keyboard.RIGHT = true;
-    }
-    if (event.key == 'ArrowLeft') {
-        if (world && world.keyboard) world.keyboard.LEFT = true;
-    }
-    if (event.key == 'ArrowUp') {
-        if (world && world.keyboard) world.keyboard.UP = true;
-    }
-    if (event.key == 'ArrowDown') {
-        if (world && world.keyboard) world.keyboard.DOWN = true;
-    }
-    if (event.key == ' ') {
-        if (world && world.keyboard) world.keyboard.SPACE = true;
-    }
-    if (event.key == 'd' || event.key == 'D' || event.key == 'x' || event.key == 'X') {
-        if (world && world.keyboard) world.keyboard.D = true;
-    }
-});
-
-window.addEventListener('keyup', (event) => {
-    if (event.key == 'ArrowRight') {
-        if (world && world.keyboard) world.keyboard.RIGHT = false;
-    }
-    if (event.key == 'ArrowLeft') {
-        if (world && world.keyboard) world.keyboard.LEFT = false;
-    }
-    if (event.key == 'ArrowUp') {
-        if (world && world.keyboard) world.keyboard.UP = false;
-    }
-    if (event.key == 'ArrowDown') {
-        if (world && world.keyboard) world.keyboard.DOWN = false;
-    }
-    if (event.key == ' ') {
-        if (world && world.keyboard) world.keyboard.SPACE = false;
-    }
-    if (event.key == 'd' || event.key == 'D' || event.key == 'x' || event.key == 'X') {
-        if (world && world.keyboard) world.keyboard.D = false;
-    }
-});
+    document.addEventListener('keyup', (e) => {
+        if (world && world.keyboard) {
+            switch(e.code) {
+                case 'ArrowLeft':
+                case 'KeyA':
+                    world.keyboard.LEFT = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    world.keyboard.RIGHT = false;
+                    break;
+                case 'Space':
+                    world.keyboard.SPACE = false;
+                    break;
+                case 'KeyD':
+                    world.keyboard.D = false;
+                    break;
+            }
+        }
+    });
+}

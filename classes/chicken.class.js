@@ -27,7 +27,7 @@ class Chicken extends MoveableObject{
         this.loadImages(this.IMAGES_WALKING);
         this.loadImages(this.IMAGES_DEAD);
         
-        // If no x position is provided, use random positioning
+        // Wenn keine x-Position angegeben ist, zufällige Position verwenden
         if (x === null) {
             this.x = 200 + Math.random()*500;
         } else {
@@ -43,7 +43,7 @@ class Chicken extends MoveableObject{
      * Sets up movement and animation loops for the chicken
      */
     animate(){
-        // Movement
+        // Bewegung
         setInterval(() => {
             if (!this.isDead) {
                 this.x -= this.speed;
@@ -58,7 +58,7 @@ class Chicken extends MoveableObject{
                 this.img = this.imageCache[path];
                 this.currentImage++;
             } else {
-                // Show dead animation
+                // Tote-Animation anzeigen
                 this.img = this.imageCache[this.IMAGES_DEAD[0]];
             }
         }, 100);

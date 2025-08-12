@@ -54,7 +54,7 @@ const level1 = new Level(
 
     ],
     [
-        // Reduced number of coins - only essential ones
+        // Reduzierte Anzahl von Münzen - nur wesentliche
         new Coin(600),
         new Coin(1000),
         new Coin(1400),
@@ -62,7 +62,7 @@ const level1 = new Level(
         new Coin(2200),
         new Coin(2600),
         
-        // Few elevated coins
+        // Wenige erhöhte Münzen
         new Coin(800, 120),
         new Coin(1200, 130),
         new Coin(1600, 125),
@@ -70,14 +70,14 @@ const level1 = new Level(
         new Coin(2400, 130),
     ],
     [
-        // Reduced number of bottles - strategic placement for endboss
+        // Reduzierte Anzahl von Flaschen - strategische Platzierung für Endboss
         new Bottle(500),
         new Bottle(1000),
         new Bottle(1500),
         new Bottle(2000),
         new Bottle(2500),
         
-        // Few elevated bottles
+        // Wenige erhöhte Flaschen
         new Bottle(800, 120),
         new Bottle(1200, 125),
         new Bottle(1600, 120),
